@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam Practice Tracker</title>
+    <style>
+        /* Your existing CSS remains the same */
+    </style>
+</head>
+<body>
+    <h1>Exam Practice Tracker</h1>
+    <table id="practiceTable">
+        <thead>
+            <tr>
+                <th>Subject</th>
+                <th>Date</th>
+                <th>Topic</th>
+                <th>Time Taken</th>
+                <th>Score</th>
+                <th>Notes</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody id="practiceBody"></tbody>
+    </table>
+    <div id="buttons"></div>
+    <button id="exportBtn" onclick="exportToWord()">Export for Word</button>
+    <div id="exportArea" contenteditable="true"></div>
+
+    <script>
+        const subjects = ['Maths', 'English', 'Physics', 'Chemistry', 'Economics'];
+        const practiceBody = document.getElementById('practiceBody');
+        const buttonsDiv = document.getElementById('buttons');
+        const exportArea = document.getElementById('exportArea');
+
+        function addPractice(subject, date = '', topic = '', hours = '', minutes = '', score = '', notes = '') {
+            const row = practiceBody.insertRow();
+            row.innerHTML = `
+                <td>${subject}</td>
+                <td><input type="date" value="${date}"></td>
+                <td><input type="text" placeholder="Enter topic" value="${topic}"></td>
+                <td>
+                    <div class="time-input">
+                        <input type="number" min="0" max="23" placeholder="HH" value="${hours}">
+                        <span>:</span>
+                        <input type="number" min="0" max="59" placeholder="MM" value="${minutes}">
+                    </div>
+                </td>
+                <td><input type="text" placeholder="Enter score" value="${score}"></td>
+                <td><input type="text" placeholder="Add notes" value="${notes}"></td>
+                <td><button class="delete-btn" onclick="deleteRow(this)">Delete</button></td>
+            `;
+        }
+
+        function deleteRow(btn) {
+            const row = btn.closest('tr');
+            row.parentNode.removeChild(row);
+            saveData();
+        }
+
+        subjects.forEach(subject => {
+            const button = document.createElement('button');
+            button.textContent = `Add ${subject} Practice`;
+            button.onclick = () => {
+                addPractice(subject);
+                saveData();
+            };
+            buttonsDiv.appendChild(button);
+        });
+
+        function saveData() {
+            const rows = practiceBody.querySelectorAll('tr');
+            const data = [];
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                const timeInputs = cells[3].querySelectorAll('input');
+                const rowData = {
+                    subject: cells[0].textContent,
+                    date: cells[1].querySelector('input').value,
+                    topic: cells[2].querySelector('input').value,
+                    hours: timeInputs[0].value,
+                    minutes: timeInputs[1].value,
+                    score: cells[4].querySelector('input').value,
+                    notes: cells[5].querySelector('input').value,
+                };
+                data.push(rowData);
+            });
+            localStorage.setItem('practiceData', JSON.stringify(data));
+        }
+
+        function loadData() {
+            const storedData = JSON.parse(localStorage.getItem('practiceData')) || [];
+            storedData.forEach(item => {
+                addPractice(item.subject, item.date, item.topic, item.hours, item.minutes, item.score, item.notes);
+            });
+        }
+
+        window.addEventListener('load', () => {
+            loadData(); // Load the saved data when the page loads
+        });
+
+        // Save data whenever a change occurs in the input fields
+        practiceBody.addEventListener('input', saveData);
+
+        function exportToWord() {
+            let content = "Exam Practice Tracker\n\n";
+            const rows = practiceBody.querySelectorAll('tr');
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                const timeInputs = cells[3].querySelectorAll('input');
+                const hours = timeInputs[0].value || '0';
+                const minutes = timeInputs[1].value || '0';
+                content += `Subject: ${cells[0].textContent}\n`;
+                content += `Date: ${cells[1].querySelector('input').value}\n`;
+                content += `Topic: ${cells[2].querySelector('input').value}\n`;
+                content += `Time Taken: ${hours} hours ${minutes} minutes\n`;
+                content += `Score: ${cells[4].querySelector('input').value}\n`;
+                content += `Notes: ${cells[5].querySelector('input').value}\n\n`;
+            });
+            exportArea.textContent = content;
+            exportArea.style.display = 'block';
+            exportArea.focus();
+            document.execCommand('selectAll');
+        }
+    </script>
+</body>
+</html>
