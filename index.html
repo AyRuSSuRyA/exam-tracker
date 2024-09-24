@@ -5,7 +5,144 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Exam Practice Tracker</title>
     <style>
-        /* Your existing CSS remains the same */
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f7f9;
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 40px;
+            font-size: 36px;
+            font-weight: bold;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            background-color: white;
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+
+        th, td {
+            padding: 15px 20px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+            font-size: 16px;
+        }
+
+        th {
+            background-color: #3498db;
+            color: white;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 14px;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9fbfc;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 14px;
+            background-color: #f3f6f9;
+        }
+
+        .time-input {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .time-input input {
+            width: 60px;
+        }
+
+        #buttons {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        button {
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            font-size: 16px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        button:hover {
+            background-color: #27ae60;
+        }
+
+        .delete-btn {
+            background-color: #e74c3c;
+            padding: 8px 15px;
+            font-size: 14px;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+
+        .delete-btn:hover {
+            background-color: #c0392b;
+        }
+
+        #exportBtn {
+            background-color: #3498db;
+            padding: 10px 25px;
+            font-size: 16px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+
+        #exportBtn:hover {
+            background-color: #2980b9;
+        }
+
+        #exportArea {
+            display: none;
+            width: 100%;
+            height: 300px;
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            font-family: 'Courier New', Courier, monospace;
+            background-color: white;
+        }
+
+        .action-btn {
+            margin-top: 15px;
+            font-size: 14px;
+        }
+
     </style>
 </head>
 <body>
@@ -24,7 +161,9 @@
         </thead>
         <tbody id="practiceBody"></tbody>
     </table>
+    
     <div id="buttons"></div>
+    
     <button id="exportBtn" onclick="exportToWord()">Export for Word</button>
     <div id="exportArea" contenteditable="true"></div>
 
@@ -97,10 +236,9 @@
         }
 
         window.addEventListener('load', () => {
-            loadData(); // Load the saved data when the page loads
+            loadData(); 
         });
 
-        // Save data whenever a change occurs in the input fields
         practiceBody.addEventListener('input', saveData);
 
         function exportToWord() {
