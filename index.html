@@ -12,15 +12,13 @@
             max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
-            background-color: #f4f7f9;
+            background-color: #f0f4f8;
         }
 
         h1 {
             text-align: center;
             color: #2c3e50;
-            margin-bottom: 40px;
-            font-size: 36px;
-            font-weight: bold;
+            margin-bottom: 30px;
         }
 
         table {
@@ -28,17 +26,15 @@
             border-collapse: separate;
             border-spacing: 0;
             background-color: white;
-            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             border-radius: 8px;
             overflow: hidden;
-            margin-bottom: 30px;
         }
 
         th, td {
-            padding: 15px 20px;
+            padding: 12px 15px;
             text-align: left;
             border-bottom: 1px solid #e0e0e0;
-            font-size: 16px;
         }
 
         th {
@@ -47,7 +43,6 @@
             font-weight: bold;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            font-size: 14px;
         }
 
         tr:last-child td {
@@ -55,17 +50,20 @@
         }
 
         tr:nth-child(even) {
-            background-color: #f9fbfc;
+            background-color: #f8f9fa;
         }
 
         input {
             width: 100%;
-            padding: 10px;
+            padding: 8px;
             border: 1px solid #ddd;
-            border-radius: 5px;
+            border-radius: 4px;
             box-sizing: border-box;
             font-size: 14px;
-            background-color: #f3f6f9;
+        }
+
+        input[type="date"], input[type="number"] {
+            padding: 6px 8px;
         }
 
         .time-input {
@@ -75,7 +73,7 @@
         }
 
         .time-input input {
-            width: 60px;
+            width: 50px;
         }
 
         #buttons {
@@ -87,13 +85,12 @@
             background-color: #2ecc71;
             color: white;
             border: none;
-            padding: 10px 20px;
-            margin: 10px;
+            padding: 10px 15px;
+            margin: 5px;
             border-radius: 5px;
             cursor: pointer;
             transition: background-color 0.3s ease;
-            font-size: 16px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            font-size: 14px;
         }
 
         button:hover {
@@ -102,11 +99,8 @@
 
         .delete-btn {
             background-color: #e74c3c;
-            padding: 8px 15px;
-            font-size: 14px;
-            color: white;
-            border: none;
-            border-radius: 5px;
+            padding: 5px 10px;
+            font-size: 12px;
         }
 
         .delete-btn:hover {
@@ -115,10 +109,8 @@
 
         #exportBtn {
             background-color: #3498db;
-            padding: 10px 25px;
-            font-size: 16px;
-            border-radius: 5px;
-            margin-top: 20px;
+            display: block;
+            margin: 20px auto;
         }
 
         #exportBtn:hover {
@@ -130,19 +122,17 @@
             width: 100%;
             height: 300px;
             margin-top: 20px;
-            padding: 15px;
+            padding: 10px;
             border: 1px solid #ddd;
-            border-radius: 5px;
+            border-radius: 4px;
             white-space: pre-wrap;
             font-family: 'Courier New', Courier, monospace;
             background-color: white;
         }
 
-        .action-btn {
-            margin-top: 15px;
-            font-size: 14px;
+        #chartContainer {
+            margin-top: 40px;
         }
-
     </style>
 </head>
 <body>
@@ -154,26 +144,35 @@
                 <th>Date</th>
                 <th>Topic</th>
                 <th>Time Taken</th>
-                <th>Score</th>
+                <th>Multiple Choice</th>
+                <th>Section B</th>
+                <th>Section C (if applicable)</th>
+                <th>Overall Score</th>
                 <th>Notes</th>
                 <th>Action</th>
             </tr>
         </thead>
         <tbody id="practiceBody"></tbody>
     </table>
-    
+
     <div id="buttons"></div>
-    
+    <div id="averagesSection"></div>
+
+    <canvas id="scoreChart" width="400" height="200"></canvas>
+
     <button id="exportBtn" onclick="exportToWord()">Export for Word</button>
     <div id="exportArea" contenteditable="true"></div>
 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         const subjects = ['Maths', 'English', 'Physics', 'Chemistry', 'Economics'];
         const practiceBody = document.getElementById('practiceBody');
         const buttonsDiv = document.getElementById('buttons');
         const exportArea = document.getElementById('exportArea');
+        const ctx = document.getElementById('scoreChart').getContext('2d');
+        let chart;
 
-        function addPractice(subject, date = '', topic = '', hours = '', minutes = '', score = '', notes = '') {
+        function addPractice(subject, date = '', topic = '', hours = '', minutes = '', mcScore = '', sectionB = '', sectionC = '', overallScore = '', notes = '') {
             const row = practiceBody.insertRow();
             row.innerHTML = `
                 <td>${subject}</td>
@@ -186,7 +185,10 @@
                         <input type="number" min="0" max="59" placeholder="MM" value="${minutes}">
                     </div>
                 </td>
-                <td><input type="text" placeholder="Enter score" value="${score}"></td>
+                <td><input type="text" placeholder="MC Score" value="${mcScore}"></td>
+                <td><input type="text" placeholder="Section B Score" value="${sectionB}"></td>
+                <td><input type="text" placeholder="Section C Score" value="${sectionC}"></td>
+                <td><input type="text" placeholder="Overall Score" value="${overallScore}"></td>
                 <td><input type="text" placeholder="Add notes" value="${notes}"></td>
                 <td><button class="delete-btn" onclick="deleteRow(this)">Delete</button></td>
             `;
@@ -220,8 +222,11 @@
                     topic: cells[2].querySelector('input').value,
                     hours: timeInputs[0].value,
                     minutes: timeInputs[1].value,
-                    score: cells[4].querySelector('input').value,
-                    notes: cells[5].querySelector('input').value,
+                    mcScore: cells[4].querySelector('input').value,
+                    sectionB: cells[5].querySelector('input').value,
+                    sectionC: cells[6].querySelector('input').value,
+                    overallScore: cells[7].querySelector('input').value,
+                    notes: cells[8].querySelector('input').value,
                 };
                 data.push(rowData);
             });
@@ -231,15 +236,104 @@
         function loadData() {
             const storedData = JSON.parse(localStorage.getItem('practiceData')) || [];
             storedData.forEach(item => {
-                addPractice(item.subject, item.date, item.topic, item.hours, item.minutes, item.score, item.notes);
+                addPractice(item.subject, item.date, item.topic, item.hours, item.minutes, item.mcScore, item.sectionB, item.sectionC, item.overallScore, item.notes);
             });
         }
 
         window.addEventListener('load', () => {
-            loadData(); 
+            loadData();
+            calculateAverages();
+            updateChart();
         });
 
-        practiceBody.addEventListener('input', saveData);
+        practiceBody.addEventListener('input', () => {
+            saveData();
+            calculateAverages();
+            updateChart();
+        });
+
+        function calculateAverages() {
+            const rows = practiceBody.querySelectorAll('tr');
+            const subjectData = {};
+
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                const subject = cells[0].textContent;
+                const mcScore = parseFloat(cells[4].querySelector('input').value) || 0;
+                const sectionB = parseFloat(cells[5].querySelector('input').value) || 0;
+                const sectionC = parseFloat(cells[6].querySelector('input').value) || 0;
+                const overallScore = parseFloat(cells[7].querySelector('input').value) || 0;
+
+                if (!subjectData[subject]) {
+                    subjectData[subject] = {
+                        mcScores: [],
+                        sectionBScores: [],
+                        sectionCScores: [],
+                        overallScores: [],
+                    };
+                }
+
+                subjectData[subject].mcScores.push(mcScore);
+                subjectData[subject].sectionBScores.push(sectionB);
+                subjectData[subject].sectionCScores.push(sectionC);
+                subjectData[subject].overallScores.push(overallScore);
+            });
+
+            let averagesContent = '<h2>Average Scores</h2><ul>';
+
+            Object.keys(subjectData).forEach(subject => {
+                const mcAvg = (subjectData[subject].mcScores.reduce((a, b) => a + b, 0) / subjectData[subject].mcScores.length).toFixed(2);
+                const sectionBAvg = (subjectData[subject].sectionBScores.reduce((a, b) => a + b, 0) / subjectData[subject].sectionBScores.length).toFixed(2);
+                const sectionCAvg = (subjectData[subject].sectionCScores.reduce((a, b) => a + b, 0) / subjectData[subject].sectionCScores.length).toFixed(2);
+                const overallAvg = (subjectData[subject].overallScores.reduce((a, b) => a + b, 0) / subjectData[subject].overallScores.length).toFixed(2);
+
+                averagesContent += `
+                    <li><strong>${subject}</strong> - Multiple Choice Avg: ${mcAvg}, Section B Avg: ${sectionBAvg}, Section C Avg: ${sectionCAvg}, Overall Avg: ${overallAvg}</li>
+                `;
+            });
+
+            averagesContent += '</ul>';
+            document.getElementById('averagesSection').innerHTML = averagesContent;
+        }
+
+        function updateChart() {
+            const rows = practiceBody.querySelectorAll('tr');
+            const labels = [];
+            const scores = [];
+
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                const subject = cells[0].textContent;
+                const overallScore = parseFloat(cells[7].querySelector('input').value) || 0;
+                labels.push(subject);
+                scores.push(overallScore);
+            });
+
+            if (chart) {
+                chart.destroy();
+            }
+
+            chart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Overall Scores',
+                        data: scores,
+                        backgroundColor: 'rgba(52, 152, 219, 0.6)',
+                        borderColor: 'rgba(41, 128, 185, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
 
         function exportToWord() {
             let content = "Exam Practice Tracker\n\n";
@@ -253,8 +347,11 @@
                 content += `Date: ${cells[1].querySelector('input').value}\n`;
                 content += `Topic: ${cells[2].querySelector('input').value}\n`;
                 content += `Time Taken: ${hours} hours ${minutes} minutes\n`;
-                content += `Score: ${cells[4].querySelector('input').value}\n`;
-                content += `Notes: ${cells[5].querySelector('input').value}\n\n`;
+                content += `Multiple Choice Score: ${cells[4].querySelector('input').value}\n`;
+                content += `Section B Score: ${cells[5].querySelector('input').value}\n`;
+                content += `Section C Score: ${cells[6].querySelector('input').value}\n`;
+                content += `Overall Score: ${cells[7].querySelector('input').value}\n`;
+                content += `Notes: ${cells[8].querySelector('input').value}\n\n`;
             });
             exportArea.textContent = content;
             exportArea.style.display = 'block';
