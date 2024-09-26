@@ -333,68 +333,6 @@
                 fill: false,
                 tension: 0.1
             }));
-...
-<canvas id="scoreChart" width="400" height="200" style="display: none;"></canvas>
-...
-<script>
-// Add this line before the chart creation
-function updateChart() {
-    const rows = practiceBody.querySelectorAll('tr');
-    const subjectData = {};
-
-    rows.forEach(row => {
-        const cells = row.querySelectorAll('td');
-        const subject = cells[0].textContent;
-        const overallScore = convertToPercentage(cells[7].querySelector('input').value) || 0;
-        const date = cells[1].querySelector('input').value;
-
-        if (!subjectData[subject]) {
-            subjectData[subject] = { scores: [], dates: [] };
-        }
-        subjectData[subject].scores.push(overallScore);
-        subjectData[subject].dates.push(date);
-    });
-
-    if (chart) {
-        chart.destroy();
-    }
-
-    const datasets = Object.keys(subjectData).map(subject => ({
-        label: subject,
-        data: subjectData[subject].scores,
-        borderColor: getRandomColor(),
-        fill: false,
-        tension: 0.1
-    }));
-
-    // Check if there are scores to display
-    if (datasets.length > 0 && datasets[0].data.length > 0) {
-        document.getElementById('scoreChart').style.display = 'block'; // Show the chart
-        chart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: subjectData['Maths (Tech-Free)']?.dates || [], // Use dates from one subject for x-axis
-                datasets: datasets
-            },
-            options: {
-                scales: {
-                    x: {
-                        type: 'time',
-                        time: {
-                            unit: 'day'
-                        }
-                    },
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
-        });
-    } else {
-        document.getElementById('scoreChart').style.display = 'none'; // Hide the chart if no data
-    }
-}
-...
 
             chart = new Chart(ctx, {
                 type: 'line',
