@@ -165,7 +165,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        const subjects = ['Maths', 'English', 'Physics', 'Chemistry', 'Economics'];
+        const subjects = ['Maths (Tech-Free)', 'Maths (Tech-Allowed)', 'English', 'Physics', 'Chemistry', 'Economics'];
         const practiceBody = document.getElementById('practiceBody');
         const buttonsDiv = document.getElementById('buttons');
         const exportArea = document.getElementById('exportArea');
@@ -174,6 +174,8 @@
 
         function addPractice(subject, date = '', topic = '', hours = '', minutes = '', mcScore = '', sectionB = '', sectionC = '', overallScore = '', notes = '') {
             const row = practiceBody.insertRow();
+            const mcDisabled = subject === 'Maths (Tech-Free)' ? 'disabled' : ''; // Disable MCQ input for Tech-Free
+
             row.innerHTML = `
                 <td>${subject}</td>
                 <td><input type="date" value="${date}"></td>
@@ -185,10 +187,10 @@
                         <input type="number" min="0" max="59" placeholder="MM" value="${minutes}">
                     </div>
                 </td>
-                <td><input type="text" placeholder="MC Score (e.g., 10/20)" value="${mcScore}"></td>
-                <td><input type="text" placeholder="Section B Score (e.g., 115/120)" value="${sectionB}"></td>
-                <td><input type="text" placeholder="Section C Score (e.g., 3/15)" value="${sectionC}"></td>
-                <td><input type="text" placeholder="Overall Score (e.g., 100/130)" value="${overallScore}"></td>
+                <td><input type="text" placeholder="MC Score (e.g., 10/18)" value="${mcScore}" ${mcDisabled}></td>
+                <td><input type="text" placeholder="Section B Score (e.g., 5/10)" value="${sectionB}"></td>
+                <td><input type="text" placeholder="Section C Score (e.g., 3/5)" value="${sectionC}"></td>
+                <td><input type="text" placeholder="Overall Score (e.g., 18/30)" value="${overallScore}"></td>
                 <td><textarea placeholder="Add notes">${notes}</textarea></td>
                 <td><button class="delete-btn" onclick="deleteRow(this)">Delete</button></td>
             `;
@@ -259,26 +261,32 @@
             rows.forEach(row => {
                 const cells = row.querySelectorAll('td');
                 const subject = cells[0].textContent;
-                
                 const mcScore = convertToPercentage(cells[4].querySelector('input').value) || 0;
                 const sectionB = convertToPercentage(cells[5].querySelector('input').value) || 0;
                 const sectionC = convertToPercentage(cells[6].querySelector('input').value) || 0;
                 const overallScore = convertToPercentage(cells[7].querySelector('input').value) || 0;
 
                 if (!subjectData[subject]) {
-                    subjectData[subject] = { mcScores: [], sectionBScores: [], sectionCScores: [], overallScores: [] };
+                    subjectData[subject] = { mcScores: [], sectionBScores: [], sectionCScores: [], overallScores: [], dates: [] };
                 }
 
-                subjectData[subject].mcScores.push(mcScore);
+                // Only push MC scores if the section is not Tech-Free
+                if (subject !== 'Maths (Tech-Free)') {
+                    subjectData[subject].mcScores.push(mcScore);
+                }
+
                 subjectData[subject].sectionBScores.push(sectionB);
                 subjectData[subject].sectionCScores.push(sectionC);
                 subjectData[subject].overallScores.push(overallScore);
+                subjectData[subject].dates.push(cells[1].querySelector('input').value); // Track date for each trial
             });
 
             let averagesContent = '<h2>Average Scores</h2><ul>';
 
             Object.keys(subjectData).forEach(subject => {
-                const mcAvg = (subjectData[subject].mcScores.reduce((a, b) => a + b, 0) / subjectData[subject].mcScores.length).toFixed(2);
+                const mcAvg = subjectData[subject].mcScores.length > 0 
+                    ? (subjectData[subject].mcScores.reduce((a, b) => a + b, 0) / subjectData[subject].mcScores.length).toFixed(2) 
+                    : 'N/A';
                 const sectionBAvg = (subjectData[subject].sectionBScores.reduce((a, b) => a + b, 0) / subjectData[subject].sectionBScores.length).toFixed(2);
                 const sectionCAvg = (subjectData[subject].sectionCScores.reduce((a, b) => a + b, 0) / subjectData[subject].sectionCScores.length).toFixed(2);
                 const overallAvg = (subjectData[subject].overallScores.reduce((a, b) => a + b, 0) / subjectData[subject].overallScores.length).toFixed(2);
@@ -299,41 +307,62 @@
 
         function updateChart() {
             const rows = practiceBody.querySelectorAll('tr');
-            const labels = [];
-            const scores = [];
+            const subjectData = {};
 
             rows.forEach(row => {
                 const cells = row.querySelectorAll('td');
                 const subject = cells[0].textContent;
                 const overallScore = convertToPercentage(cells[7].querySelector('input').value) || 0;
-                labels.push(subject);
-                scores.push(overallScore);
+                const date = cells[1].querySelector('input').value;
+
+                if (!subjectData[subject]) {
+                    subjectData[subject] = { scores: [], dates: [] };
+                }
+                subjectData[subject].scores.push(overallScore);
+                subjectData[subject].dates.push(date);
             });
 
             if (chart) {
                 chart.destroy();
             }
 
+            const datasets = Object.keys(subjectData).map(subject => ({
+                label: subject,
+                data: subjectData[subject].scores,
+                borderColor: getRandomColor(),
+                fill: false,
+                tension: 0.1
+            }));
+
             chart = new Chart(ctx, {
-                type: 'bar',
+                type: 'line',
                 data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Overall Scores (%)',
-                        data: scores,
-                        backgroundColor: 'rgba(52, 152, 219, 0.6)',
-                        borderColor: 'rgba(41, 128, 185, 1)',
-                        borderWidth: 1
-                    }]
+                    labels: subjectData['Maths (Tech-Free)']?.dates || [], // Use dates from one subject for x-axis
+                    datasets: datasets
                 },
                 options: {
                     scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                unit: 'day'
+                            }
+                        },
                         y: {
                             beginAtZero: true
                         }
                     }
                 }
             });
+        }
+
+        function getRandomColor() {
+            const letters = '0123456789ABCDEF';
+            let color = '#';
+            for (let i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return color;
         }
 
         function exportToWord() {
