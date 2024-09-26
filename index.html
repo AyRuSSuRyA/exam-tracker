@@ -53,7 +53,7 @@
             background-color: #f8f9fa;
         }
 
-        input {
+        input, textarea {
             width: 100%;
             padding: 8px;
             border: 1px solid #ddd;
@@ -185,11 +185,11 @@
                         <input type="number" min="0" max="59" placeholder="MM" value="${minutes}">
                     </div>
                 </td>
-                <td><input type="text" placeholder="MC Score" value="${mcScore}"></td>
-                <td><input type="text" placeholder="Section B Score" value="${sectionB}"></td>
-                <td><input type="text" placeholder="Section C Score" value="${sectionC}"></td>
-                <td><input type="text" placeholder="Overall Score" value="${overallScore}"></td>
-                <td><input type="text" placeholder="Add notes" value="${notes}"></td>
+                <td><input type="text" placeholder="MC Score (e.g., 10/20)" value="${mcScore}"></td>
+                <td><input type="text" placeholder="Section B Score (e.g., 115/120)" value="${sectionB}"></td>
+                <td><input type="text" placeholder="Section C Score (e.g., 3/15)" value="${sectionC}"></td>
+                <td><input type="text" placeholder="Overall Score (e.g., 100/130)" value="${overallScore}"></td>
+                <td><textarea placeholder="Add notes">${notes}</textarea></td>
                 <td><button class="delete-btn" onclick="deleteRow(this)">Delete</button></td>
             `;
         }
@@ -226,7 +226,7 @@
                     sectionB: cells[5].querySelector('input').value,
                     sectionC: cells[6].querySelector('input').value,
                     overallScore: cells[7].querySelector('input').value,
-                    notes: cells[8].querySelector('input').value,
+                    notes: cells[8].querySelector('textarea').value,
                 };
                 data.push(rowData);
             });
@@ -259,18 +259,14 @@
             rows.forEach(row => {
                 const cells = row.querySelectorAll('td');
                 const subject = cells[0].textContent;
-                const mcScore = parseFloat(cells[4].querySelector('input').value) || 0;
-                const sectionB = parseFloat(cells[5].querySelector('input').value) || 0;
-                const sectionC = parseFloat(cells[6].querySelector('input').value) || 0;
-                const overallScore = parseFloat(cells[7].querySelector('input').value) || 0;
+                
+                const mcScore = convertToPercentage(cells[4].querySelector('input').value) || 0;
+                const sectionB = convertToPercentage(cells[5].querySelector('input').value) || 0;
+                const sectionC = convertToPercentage(cells[6].querySelector('input').value) || 0;
+                const overallScore = convertToPercentage(cells[7].querySelector('input').value) || 0;
 
                 if (!subjectData[subject]) {
-                    subjectData[subject] = {
-                        mcScores: [],
-                        sectionBScores: [],
-                        sectionCScores: [],
-                        overallScores: [],
-                    };
+                    subjectData[subject] = { mcScores: [], sectionBScores: [], sectionCScores: [], overallScores: [] };
                 }
 
                 subjectData[subject].mcScores.push(mcScore);
@@ -288,12 +284,17 @@
                 const overallAvg = (subjectData[subject].overallScores.reduce((a, b) => a + b, 0) / subjectData[subject].overallScores.length).toFixed(2);
 
                 averagesContent += `
-                    <li><strong>${subject}</strong> - Multiple Choice Avg: ${mcAvg}, Section B Avg: ${sectionBAvg}, Section C Avg: ${sectionCAvg}, Overall Avg: ${overallAvg}</li>
+                    <li><strong>${subject}</strong> - Multiple Choice Avg: ${mcAvg}%, Section B Avg: ${sectionBAvg}%, Section C Avg: ${sectionCAvg}%, Overall Avg: ${overallAvg}%</li>
                 `;
             });
 
             averagesContent += '</ul>';
             document.getElementById('averagesSection').innerHTML = averagesContent;
+        }
+
+        function convertToPercentage(fraction) {
+            const [numerator, denominator] = fraction.split('/').map(Number);
+            return numerator && denominator ? (numerator / denominator) * 100 : null;
         }
 
         function updateChart() {
@@ -304,7 +305,7 @@
             rows.forEach(row => {
                 const cells = row.querySelectorAll('td');
                 const subject = cells[0].textContent;
-                const overallScore = parseFloat(cells[7].querySelector('input').value) || 0;
+                const overallScore = convertToPercentage(cells[7].querySelector('input').value) || 0;
                 labels.push(subject);
                 scores.push(overallScore);
             });
@@ -318,7 +319,7 @@
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: 'Overall Scores',
+                        label: 'Overall Scores (%)',
                         data: scores,
                         backgroundColor: 'rgba(52, 152, 219, 0.6)',
                         borderColor: 'rgba(41, 128, 185, 1)',
@@ -351,7 +352,7 @@
                 content += `Section B Score: ${cells[5].querySelector('input').value}\n`;
                 content += `Section C Score: ${cells[6].querySelector('input').value}\n`;
                 content += `Overall Score: ${cells[7].querySelector('input').value}\n`;
-                content += `Notes: ${cells[8].querySelector('input').value}\n\n`;
+                content += `Notes: ${cells[8].querySelector('textarea').value}\n\n`;
             });
             exportArea.textContent = content;
             exportArea.style.display = 'block';
