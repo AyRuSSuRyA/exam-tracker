@@ -254,51 +254,64 @@
             updateChart();
         });
 
-        function calculateAverages() {
-            const rows = practiceBody.querySelectorAll('tr');
-            const subjectData = {};
+      function calculateAverages() {
+    const rows = practiceBody.querySelectorAll('tr');
+    const subjectData = {};
 
-            rows.forEach(row => {
-                const cells = row.querySelectorAll('td');
-                const subject = cells[0].textContent;
-                const mcScore = convertToPercentage(cells[4].querySelector('input').value) || 0;
-                const sectionB = convertToPercentage(cells[5].querySelector('input').value) || 0;
-                const sectionC = convertToPercentage(cells[6].querySelector('input').value) || 0;
-                const overallScore = convertToPercentage(cells[7].querySelector('input').value) || 0;
+    rows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        const subject = cells[0].textContent;
+        const mcScore = convertToPercentage(cells[4].querySelector('input').value) || null;
+        const sectionB = convertToPercentage(cells[5].querySelector('input').value) || null;
+        const sectionC = convertToPercentage(cells[6].querySelector('input').value) || null;
+        const overallScore = convertToPercentage(cells[7].querySelector('input').value) || null;
 
-                if (!subjectData[subject]) {
-                    subjectData[subject] = { mcScores: [], sectionBScores: [], sectionCScores: [], overallScores: [], dates: [] };
-                }
-
-                // Only push MC scores if the section is not Tech-Free
-                if (subject !== 'Maths (Tech-Free)') {
-                    subjectData[subject].mcScores.push(mcScore);
-                }
-
-                subjectData[subject].sectionBScores.push(sectionB);
-                subjectData[subject].sectionCScores.push(sectionC);
-                subjectData[subject].overallScores.push(overallScore);
-                subjectData[subject].dates.push(cells[1].querySelector('input').value); // Track date for each trial
-            });
-
-            let averagesContent = '<h2>Average Scores</h2><ul>';
-
-            Object.keys(subjectData).forEach(subject => {
-                const mcAvg = subjectData[subject].mcScores.length > 0 
-                    ? (subjectData[subject].mcScores.reduce((a, b) => a + b, 0) / subjectData[subject].mcScores.length).toFixed(2) 
-                    : 'N/A';
-                const sectionBAvg = (subjectData[subject].sectionBScores.reduce((a, b) => a + b, 0) / subjectData[subject].sectionBScores.length).toFixed(2);
-                const sectionCAvg = (subjectData[subject].sectionCScores.reduce((a, b) => a + b, 0) / subjectData[subject].sectionCScores.length).toFixed(2);
-                const overallAvg = (subjectData[subject].overallScores.reduce((a, b) => a + b, 0) / subjectData[subject].overallScores.length).toFixed(2);
-
-                averagesContent += `
-                    <li><strong>${subject}</strong> - Multiple Choice Avg: ${mcAvg}%, Section B Avg: ${sectionBAvg}%, Section C Avg: ${sectionCAvg}%, Overall Avg: ${overallAvg}%</li>
-                `;
-            });
-
-            averagesContent += '</ul>';
-            document.getElementById('averagesSection').innerHTML = averagesContent;
+        if (!subjectData[subject]) {
+            subjectData[subject] = { mcScores: [], sectionBScores: [], sectionCScores: [], overallScores: [] };
         }
+
+        if (subject !== 'Maths (Tech-Free)' && mcScore !== null) {
+            subjectData[subject].mcScores.push(mcScore);
+        }
+
+        if (sectionB !== null) {
+            subjectData[subject].sectionBScores.push(sectionB);
+        }
+
+        if (sectionC !== null) {
+            subjectData[subject].sectionCScores.push(sectionC);
+        }
+
+        if (overallScore !== null) {
+            subjectData[subject].overallScores.push(overallScore);
+        }
+    });
+
+    let averagesContent = '<h2>Average Scores</h2><ul>';
+
+    Object.keys(subjectData).forEach(subject => {
+        const mcAvg = subjectData[subject].mcScores.length > 0 
+            ? (subjectData[subject].mcScores.reduce((a, b) => a + b, 0) / subjectData[subject].mcScores.length).toFixed(2) 
+            : 'N/A';
+        const sectionBAvg = subjectData[subject].sectionBScores.length > 0 
+            ? (subjectData[subject].sectionBScores.reduce((a, b) => a + b, 0) / subjectData[subject].sectionBScores.length).toFixed(2) 
+            : 'N/A';
+        const sectionCAvg = subjectData[subject].sectionCScores.length > 0 
+            ? (subjectData[subject].sectionCScores.reduce((a, b) => a + b, 0) / subjectData[subject].sectionCScores.length).toFixed(2) 
+            : 'N/A';
+        const overallAvg = subjectData[subject].overallScores.length > 0 
+            ? (subjectData[subject].overallScores.reduce((a, b) => a + b, 0) / subjectData[subject].overallScores.length).toFixed(2) 
+            : 'N/A';
+
+        averagesContent += `
+            <li><strong>${subject}</strong> - Multiple Choice Avg: ${mcAvg}%, Section B Avg: ${sectionBAvg}%, Section C Avg: ${sectionCAvg}%, Overall Avg: ${overallAvg}%</li>
+        `;
+    });
+
+    averagesContent += '</ul>';
+    document.getElementById('averagesSection').innerHTML = averagesContent;
+}
+
 
         function convertToPercentage(fraction) {
             const [numerator, denominator] = fraction.split('/').map(Number);
