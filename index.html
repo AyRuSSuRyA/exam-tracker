@@ -151,9 +151,47 @@
             margin: 20px 0;
         }
 
-        textarea {
-  resize: auto;
+   textarea {
+    min-height: 50px; /* Set a minimum height */
+    max-height: 500px; /* Set a maximum height, so it doesn't grow infinitely */
+    overflow-y: hidden; /* Hide the scrollbar */
+    resize: none; /* Disable manual resizing */
 }
+
+textarea:focus {
+    outline: none; /* Remove the blue outline when focused */
+}
+
+/* Auto-expansion for textarea */
+textarea[autoexpand] {
+    height: auto;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+textarea[autoexpand]:focus {
+    height: auto;
+    overflow-y: hidden;
+}
+
+/* Set the auto-expanding behavior */
+textarea[autoexpand] {
+    display: block;
+    width: 100%;
+    font-size: 14px;
+    line-height: 1.5;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #fff;
+    transition: height 0.1s ease-out;
+}
+
+textarea[autoexpand]:focus {
+    border-color: #66afe9;
+    outline: none;
+}
+
     </style>
 </head>
 
