@@ -5,59 +5,63 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Exam Practice Tracker</title>
     <style>
-        /* Existing styles remain the same */
-        
-        /* Updated textarea styles */
+        /* Keep all existing styles */
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f0f4f8;
+        }
+
+        /* All your existing styles here */
+
+        /* Add new styles for textarea and averages visualization */
         textarea {
-            width: 100%;
             min-height: 60px;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            box-sizing: border-box;
-            font-size: 14px;
-            resize: vertical;
+            height: auto;
             overflow-y: hidden;
         }
 
-        /* New styles for statistics cards */
-        .stats-container {
+        #averagesSection {
+            margin-top: 30px;
             display: flex;
             flex-wrap: wrap;
             gap: 20px;
-            margin-top: 30px;
-            margin-bottom: 30px;
         }
 
-        .stat-card {
+        .subject-card {
             flex: 1;
-            min-width: 250px;
+            min-width: 300px;
             background-color: white;
             border-radius: 8px;
             padding: 15px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
-        .stat-card h3 {
-            margin: 0 0 10px 0;
+        .subject-card h3 {
+            margin-top: 0;
             color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 5px;
         }
 
-        .progress-container {
-            margin-top: 10px;
-        }
-
-        .progress-label {
+        .stat-row {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 5px;
+            align-items: center;
+            margin: 10px 0;
         }
 
         .progress-bar {
-            height: 10px;
+            flex-grow: 1;
+            height: 20px;
             background-color: #ecf0f1;
-            border-radius: 5px;
+            border-radius: 10px;
             overflow: hidden;
+            margin: 0 10px;
         }
 
         .progress-fill {
@@ -68,16 +72,11 @@
     </style>
 </head>
 <body>
-    <!-- Existing HTML structure remains the same -->
+    <!-- Keep all your existing HTML -->
 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        // Existing JavaScript remains largely the same, with these key modifications:
-        
-        // Update the textarea auto-resize functionality
-        function autoResize(textarea) {
-            textarea.style.height = 'auto';
-            textarea.style.height = textarea.scrollHeight + 'px';
-        }
+        // Keep all your existing JavaScript
 
         // Modify the addPractice function to include auto-resize
         function addPractice(subject, date = '', topic = '', hours = '', minutes = '', mcScore = '', sectionB = '', sectionC = '', overallScore = '', notes = '') {
@@ -102,18 +101,23 @@
                 <td><textarea placeholder="Add notes" oninput="autoResize(this)">${notes}</textarea></td>
                 <td><button class="delete-btn" onclick="deleteRow(this)">Delete</button></td>
             `;
-
-            // Trigger auto-resize for the new textarea
-            const newTextarea = row.querySelector('textarea');
-            autoResize(newTextarea);
+            
+            // Auto-resize the newly added textarea
+            const textarea = row.querySelector('textarea');
+            autoResize(textarea);
         }
 
-        // Update the calculateAverages function to create a more visual representation
+        // Add the autoResize function
+        function autoResize(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = textarea.scrollHeight + 'px';
+        }
+
+        // Modify the calculateAverages function for better visualization
         function calculateAverages() {
             const rows = practiceBody.querySelectorAll('tr');
             const subjectData = {};
 
-            // Collect data (same as before)
             rows.forEach(row => {
                 const cells = row.querySelectorAll('td');
                 const subject = cells[0].textContent;
@@ -126,14 +130,15 @@
                     subjectData[subject] = { mcScores: [], sectionBScores: [], sectionCScores: [], overallScores: [] };
                 }
 
-                if (subject !== 'Maths (Tech-Free)' && mcScore !== null) subjectData[subject].mcScores.push(mcScore);
+                if (subject !== 'Maths (Tech-Free)' && mcScore !== null) {
+                    subjectData[subject].mcScores.push(mcScore);
+                }
                 if (sectionB !== null) subjectData[subject].sectionBScores.push(sectionB);
                 if (sectionC !== null) subjectData[subject].sectionCScores.push(sectionC);
                 if (overallScore !== null) subjectData[subject].overallScores.push(overallScore);
             });
 
-            // Create visual representation
-            let statsHTML = '<div class="stats-container">';
+            let averagesHTML = '';
             
             Object.keys(subjectData).forEach(subject => {
                 const mcAvg = calculateAverage(subjectData[subject].mcScores);
@@ -141,19 +146,18 @@
                 const sectionCAvg = calculateAverage(subjectData[subject].sectionCScores);
                 const overallAvg = calculateAverage(subjectData[subject].overallScores);
 
-                statsHTML += `
-                    <div class="stat-card">
+                averagesHTML += `
+                    <div class="subject-card">
                         <h3>${subject}</h3>
-                        ${createProgressBar('Multiple Choice', mcAvg)}
-                        ${createProgressBar('Section B', sectionBAvg)}
-                        ${createProgressBar('Section C', sectionCAvg)}
-                        ${createProgressBar('Overall', overallAvg)}
+                        ${createStatRow('Multiple Choice', mcAvg)}
+                        ${createStatRow('Section B', sectionBAvg)}
+                        ${createStatRow('Section C', sectionCAvg)}
+                        ${createStatRow('Overall', overallAvg)}
                     </div>
                 `;
             });
 
-            statsHTML += '</div>';
-            document.getElementById('averagesSection').innerHTML = statsHTML;
+            document.getElementById('averagesSection').innerHTML = averagesHTML;
         }
 
         function calculateAverage(scores) {
@@ -162,28 +166,35 @@
                 : null;
         }
 
-        function createProgressBar(label, value) {
+        function createStatRow(label, value) {
             if (value === null) return '';
             return `
-                <div class="progress-container">
-                    <div class="progress-label">
-                        <span>${label}</span>
-                        <span>${value}%</span>
-                    </div>
+                <div class="stat-row">
+                    <span>${label}:</span>
                     <div class="progress-bar">
                         <div class="progress-fill" style="width: ${value}%"></div>
                     </div>
+                    <span>${value}%</span>
                 </div>
             `;
         }
 
-        // Initialize auto-resize for existing textareas
+        // Update the window load event listener
         window.addEventListener('load', () => {
             loadData();
             document.querySelectorAll('textarea').forEach(textarea => {
                 autoResize(textarea);
-                textarea.addEventListener('input', () => autoResize(textarea));
             });
+            calculateAverages();
+            updateChart();
+        });
+
+        // Update the input event listener for the practice body
+        practiceBody.addEventListener('input', (e) => {
+            if (e.target.tagName === 'TEXTAREA') {
+                autoResize(e.target);
+            }
+            saveData();
             calculateAverages();
             updateChart();
         });
