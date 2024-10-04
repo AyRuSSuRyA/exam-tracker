@@ -209,15 +209,16 @@
                 <td><input type="text" placeholder="Section B Score (e.g., 5/10)" value="${sectionB}"></td>
                 <td><input type="text" placeholder="Section C Score (e.g., 3/5)" value="${sectionC}"></td>
                 <td><input type="text" placeholder="Overall Score (e.g., 18/30)" value="${overallScore}"></td>
-                <td><textarea placeholder="Add notes" oninput="autoExpand(this)">${notes}</textarea></td>
+                <td><textarea placeholder="Add notes" oninput="autoExpand(this)" style="overflow: hidden">${notes}</textarea></td>
                 <td><button class="delete-btn" onclick="deleteRow(this)">Delete</button></td>
             `;
         }
 
-        function autoExpand(textarea) {
-            textarea.style.height = 'auto';
-            textarea.style.height = textarea.scrollHeight + 'px';
-        }
+       function autoExpand(element) {
+    element.style.height = 'auto';  // Reset the height to auto
+    element.style.height = (element.scrollHeight) + 'px';  // Set it to the scroll height
+}
+
 
         function deleteRow(btn) {
             const row = btn.closest('tr');
