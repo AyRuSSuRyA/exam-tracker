@@ -142,6 +142,14 @@
         #chartContainer {
             margin-top: 40px;
         }
+
+        .subject-graph {
+            margin-top: 40px;
+        }
+
+        canvas {
+            margin: 20px 0;
+        }
     </style>
 </head>
 
@@ -168,7 +176,7 @@
     <div id="buttons"></div>
     <div id="averagesSection"></div>
 
-    <canvas id="scoreChart" width="400" height="200"></canvas>
+    <div id="chartsContainer"></div>
 
     <button id="exportBtn" onclick="exportToWord()">Export for Word</button>
     <div id="exportArea" contenteditable="true"></div>
@@ -179,8 +187,8 @@
         const practiceBody = document.getElementById('practiceBody');
         const buttonsDiv = document.getElementById('buttons');
         const exportArea = document.getElementById('exportArea');
-        const ctx = document.getElementById('scoreChart').getContext('2d');
-        let chart;
+        const chartsContainer = document.getElementById('chartsContainer');
+        const chartInstances = {}; // Store chart instances for each subject
 
         function addPractice(subject, date = '', topic = '', hours = '', minutes = '', mcScore = '', sectionB = '', sectionC = '', overallScore = '', notes = '') {
             const row = practiceBody.insertRow();
@@ -260,13 +268,13 @@
         window.addEventListener('load', () => {
             loadData();
             calculateAverages();
-            updateChart();
+            updateAllCharts();
         });
 
         practiceBody.addEventListener('input', () => {
             saveData();
             calculateAverages();
-            updateChart();
+            updateAllCharts();
         });
 
         function calculateAverages() {
@@ -329,47 +337,63 @@
             return NaN;
         }
 
-        function updateChart() {
-            const rows = practiceBody.querySelectorAll('tr');
-            const dates = [];
-            const overallScores = [];
+        function updateAllCharts() {
+            chartsContainer.innerHTML = ''; // Clear previous charts
+            const subjectRows = {};
 
+            const rows = practiceBody.querySelectorAll('tr');
             rows.forEach(row => {
                 const cells = row.querySelectorAll('td');
+                const subject = cells[0].textContent;
                 const date = cells[1].querySelector('input').value;
                 const overallScore = convertToPercentage(cells[7].querySelector('input').value);
 
                 if (date && !isNaN(overallScore)) {
-                    dates.push(date);
-                    overallScores.push(overallScore);
+                    if (!subjectRows[subject]) {
+                        subjectRows[subject] = {
+                            dates: [],
+                            scores: []
+                        };
+                    }
+                    subjectRows[subject].dates.push(date);
+                    subjectRows[subject].scores.push(overallScore);
                 }
             });
 
-            if (chart) {
-                chart.destroy();
-            }
+            Object.keys(subjectRows).forEach(subject => {
+                const subjectDiv = document.createElement('div');
+                subjectDiv.className = 'subject-graph';
+                subjectDiv.innerHTML = `<h3>${subject} Progress</h3><canvas id="${subject}-chart"></canvas>`;
+                chartsContainer.appendChild(subjectDiv);
 
-            chart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: dates,
-                    datasets: [{
-                        label: 'Overall Scores Over Time (%)',
-                        data: overallScores,
-                        borderColor: 'rgba(75, 192, 192, 1)',
-                        borderWidth: 2,
-                        fill: false,
-                        tension: 0.1
-                    }]
-                },
-                options: {
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            max: 100
+                const ctx = document.getElementById(`${subject}-chart`).getContext('2d');
+
+                if (chartInstances[subject]) {
+                    chartInstances[subject].destroy();
+                }
+
+                chartInstances[subject] = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: subjectRows[subject].dates,
+                        datasets: [{
+                            label: `${subject} Overall Scores (%)`,
+                            data: subjectRows[subject].scores,
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 2,
+                            fill: false,
+                            tension: 0.1
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 100
+                            }
                         }
                     }
-                }
+                });
             });
         }
 
